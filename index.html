@@ -6,11 +6,11 @@
     <title>Enota Fee Estimate</title>
     <link rel="icon" type="image/svg+xml" href="assets/favicon.ico">
     <style>
-        /* 1. Font Definition pointing to klavika-modified folder */
+        /* 1. Font Definition pointing to fonts folder */
         @font-face {
             font-family: 'CustomKlavika';
-            src: url('klavika-modified/klavika-regular.woff2') format('woff2'),
-                 url('klavika-modified/klavika-regular.ttf') format('truetype');
+            src: url('fonts/klavika-regular.woff2') format('woff2'),
+                 url('fonts/klavika-regular.ttf') format('truetype');
             font-weight: normal;
             font-style: normal;
             font-display: swap;
@@ -285,7 +285,7 @@
 
             let isInvValid = true;
             if (isNaN(V) || V < MIN_INVESTMENT) {
-                invError.style.display = 'block';
+                invError.style.display = 'none';
                 isInvValid = false;
             } else {
                 invError.style.display = 'none';
@@ -296,7 +296,7 @@
 
             let isFactorValid = true;
             if (isNaN(factor) || factor < 0.5 || factor > 2.0) {
-                factorError.style.display = 'block';
+                factorError.style.display = 'none';
                 isFactorValid = false;
             } else {
                 factorError.style.display = 'none';
