@@ -113,6 +113,15 @@
                     calc(clamp(32px, 10vw, 48px) + env(safe-area-inset-left));
             }
             
+            /*
+             * When either input is focused, move the unchanged calculator
+             * to the top of the visible mobile area.
+             */
+            body:focus-within {
+                align-items: flex-start;
+                padding-top: calc(8px + env(safe-area-inset-top));
+            }
+
             .calculator-card:focus-within .header {
                 max-height: 0px;
                 margin-bottom: 0px;
