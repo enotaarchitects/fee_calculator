@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#d2e630">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Fee Estimate">
+    <title>Enota Fee Estimate</title>
+    <link rel="manifest" href="./manifest.webmanifest">
+    <link rel="apple-touch-icon" sizes="180x180" href="./assets/icon-180.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="./assets/icon-192.png">
+    <link rel="icon" type="image/x-icon" href="./assets/favicon.ico">
+    <style>
+        /* 1. Font Definition pointing to fonts folder */
+        @font-face {
+            font-family: 'CustomKlavika';
+            src: url('./fonts/klavika-regular.ttf') format('truetype');
+            font-weight: normal;
+            font-style: normal;
+            font-display: swap;
+        }
+
+        /* 2. Theme Colors & Properties */
+        :root {
+            --bg-color: #d2e630;
+            --field-bg: #bed12b;
+            --result-bg: #d2e630;     /* Reverted to exactly match the page background */
+            --text-color: #292727;
+            --text-muted: #444040;
+            --error-color: #b30000;
+
+            /* Shared logo/field proportion: 3930 pt × 754 pt */
+            --element-ratio: 3930 / 754;
+
+            /*
+             * Change only --chamfer-x. The vertical percentage is calculated
+             * automatically from the fixed 3930:754 element ratio, keeping
+             * the horizontal and vertical chamfer cuts physically equal.
+             */
+            --chamfer-x: 3%;
+            --chamfer-y: calc(var(--chamfer-x) * 3930 / 754);
+
+            --border-width: 2px;      /* Perpendicular outline thickness */
+
+            /*
+             * A 45° diagonal needs a small extra inward shift so its visible
+             * border thickness matches the horizontal and vertical edges.
+             * 0.414214 = √2 - 1.
+             */
+            --diagonal-border-shift: calc(var(--border-width) * 0.414214);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body { 
+            font-family: 'CustomKlavika', 'Klavika', 'Trebuchet MS', -apple-system, sans-serif; 
+            background-color: var(--bg-color); 
+            color: var(--text-color);
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            min-height: 100vh;
+            min-height: 100dvh;
+            padding:
+                calc(20px + env(safe-area-inset-top))
+                calc(16px + env(safe-area-inset-right))
+                calc(20px + env(safe-area-inset-bottom))
+                calc(16px + env(safe-area-inset-left));
+            overscroll-behavior: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .calculator-card { 
+            width: 100%; 
+            max-width: 400px; 
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+        }
+
+        /* 3. Header & Logo Area */
+        .header {
+            text-align: center;
+            transition: all 0.3s ease-in-out;
+            max-height: 220px;
+            overflow: hidden;
+            margin-bottom: 64px;
+        }
+
+        .logo {
+            display: block;
+            width: 100%;
+            max-width: none;
+            height: auto;
+            aspect-ratio: var(--element-ratio);
+        }
+
+        /* Auto-collapse header ONLY on mobile screens (< 768px) when focused */
+        @media (max-width: 767.98px) {
+            
+            body {
+                padding:
+                    calc(20px + env(safe-area-inset-top))
+                    calc(clamp(32px, 10vw, 48px) + env(safe-area-inset-right))
+                    calc(36px + env(safe-area-inset-bottom))
+                    calc(clamp(32px, 10vw, 48px) + env(safe-area-inset-left));
+            }
+            
+            .calculator-card:focus-within .header {
+                max-height: 0px;
+                margin-bottom: 0px;
+                opacity: 0;
+            }
+        }
+
+        /* 4. 4-Corner Chamfered Box with Continuous Outline */
+        .chamfer-box {
+            position: relative;
+            width: 100%;
+            aspect-ratio: var(--element-ratio);
+            padding: clamp(6px, 2vw, 12px) clamp(16px, 5vw, 22px);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            background-color: var(--text-color);
+            clip-path: polygon(
+                var(--chamfer-x) 0%,
+                calc(100% - var(--chamfer-x)) 0%,
+                100% var(--chamfer-y),
+                100% calc(100% - var(--chamfer-y)),
+                calc(100% - var(--chamfer-x)) 100%,
+                var(--chamfer-x) 100%,
+                0% calc(100% - var(--chamfer-y)),
+                0% var(--chamfer-y)
+            );
+            filter: none;
+        }
+
+        .chamfer-box::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            z-index: 0;
+            background-color: var(--field-bg);
+            clip-path: polygon(
+                calc(var(--chamfer-x) + var(--diagonal-border-shift)) var(--border-width),
+                calc(100% - var(--chamfer-x) - var(--diagonal-border-shift)) var(--border-width),
+                calc(100% - var(--border-width)) calc(var(--chamfer-y) + var(--diagonal-border-shift)),
+                calc(100% - var(--border-width)) calc(100% - var(--chamfer-y) - var(--diagonal-border-shift)),
+                calc(100% - var(--chamfer-x) - var(--diagonal-border-shift)) calc(100% - var(--border-width)),
+                calc(var(--chamfer-x) + var(--diagonal-border-shift)) calc(100% - var(--border-width)),
+                var(--border-width) calc(100% - var(--chamfer-y) - var(--diagonal-border-shift)),
+                var(--border-width) calc(var(--chamfer-y) + var(--diagonal-border-shift))
+            );
+        }
+
+        .chamfer-box > * {
+            position: relative;
+            z-index: 1;
+        }
+
+        .chamfer-box.result::before {
+            background-color: var(--result-bg);
+        }
+
+        /* 5. Typography & Form Inputs */
+        label { 
+            display: block; 
+            font-size: 0.75rem; 
+            font-weight: 800; 
+            text-transform: uppercase; 
+            letter-spacing: 0.8px;
+            color: var(--text-color); /* Updated to match dark grey font for contrast */
+            margin-bottom: 0; 
+        }
+
+        .field-group {
+            display: flex;
+            flex-direction: column;
+            margin-top: 1.125rem;
+        }
+
+        .field-group:first-of-type {
+            margin-top: 0;
+        }
+
+        .field-group label {
+            margin-bottom: 0.4rem;
+        }
+
+        .input-row {
+            width: 100%;
+            display: flex;
+            align-items: baseline;
+            gap: 8px;
+        }
+
+        input[type="text"] { 
+            width: 100%; 
+            background: transparent;
+            border: none;
+            outline: none;
+            font-family: inherit;
+            font-size: clamp(2rem, 9.5vw, 2.5rem);
+            line-height: 1;
+            font-weight: 700;
+            color: var(--text-color);
+            text-align: right; /* Aligns input to the right like the mockup */
+        }
+
+        input[type="text"]::placeholder {
+            color: rgba(41, 39, 39, 0.3);
+        }
+
+        .unit {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--text-color);
+        }
+
+        .hint { 
+            font-size: 0.7rem; 
+            font-weight: 600;
+            color: var(--text-color); 
+            margin-top: 4px; 
+            opacity: 0.85;
+            display: none; /* Hidden by default to match clean mockup */
+        }
+
+        .error { 
+            color: var(--error-color); 
+            font-size: 0.75rem; 
+            font-weight: 700; 
+            margin-top: 6px; 
+            display: none; 
+        }
+
+        /* 6. Results Formatting */
+        .result-value { 
+            width: 100%;
+            font-size: clamp(2rem, 9.5vw, 2.5rem); 
+            font-weight: 800; 
+            color: var(--text-color); 
+            line-height: 1;
+            margin: 0;
+            text-align: right; /* Align right to match inputs */
+        }
+    </style>
+</head>
+<body>
+
+    <div class="calculator-card">
+        
+        <div class="header">
+            <img src="assets/logo.svg" alt="Firm Logo" class="logo" onerror="this.style.display='none'; document.getElementById('logo-text').style.display='block';">
+            <h2 id="logo-text" style="display:none; font-size: 1.4rem; font-weight: 900; letter-spacing: 1px; color: var(--text-color);">STUDIO LOGO</h2>
+        </div>
+        
+        <div class="field-group">
+            <label for="investment">Insert investment in EUR</label>
+            <div class="chamfer-box">
+                <div class="input-row">
+                    <input type="text" id="investment" placeholder="" inputmode="numeric" oninput="formatAndCalculate()">
+                    <span style="display:none;" class="unit">€</span>
+                </div>
+                <div id="inv-error" class="error">Vrednost mora biti vsaj 500.000 €</div>
+            </div>
+        </div>
+
+        <div class="field-group">
+            <label for="factor">Modify factor of complexity</label>
+            <div class="chamfer-box">
+                <div class="input-row">
+                    <input type="text" id="factor" value="1,00" placeholder="1,00" inputmode="decimal" oninput="calculateFee()">
+                </div>
+                <div id="factor-error" class="error">Faktor mora biti med 0,5 in 2,0</div>
+            </div>
+        </div>
+
+        <div class="field-group">
+            <label>Estimated fee in percentage of investment</label>
+            <div class="chamfer-box result">
+                <div class="result-value" id="fee-percentage">0,00%</div>
+            </div>
+        </div>
+
+        <div class="field-group">
+            <label>Estimated fee in EUR</label>
+            <div class="chamfer-box result">
+                <div class="result-value" id="fee-amount">0</div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        const MIN_INVESTMENT = 500000;
+
+        function formatAndCalculate() {
+            const input = document.getElementById('investment');
+            let rawDigits = input.value.replace(/\D/g, '');
+            if (rawDigits === '') {
+                input.value = '';
+                resetResults();
+                return;
+            }
+            input.value = parseInt(rawDigits, 10).toLocaleString('de-DE');
+            calculateFee();
+        }
+
+        function resetResults() {
+            document.getElementById('inv-error').style.display = 'none';
+            document.getElementById('factor-error').style.display = 'none';
+            document.getElementById('fee-percentage').innerText = '0,00%';
+            document.getElementById('fee-amount').innerText = '0';
+        }
+
+        function calculateFee() {
+            const invInput = document.getElementById('investment').value;
+            const factorInput = document.getElementById('factor').value;
+            
+            const invError = document.getElementById('inv-error');
+            const factorError = document.getElementById('factor-error');
+            const feePercentageDisplay = document.getElementById('fee-percentage');
+            const feeAmountDisplay = document.getElementById('fee-amount');
+
+            const V = parseFloat(invInput.replace(/\./g, ''));
+
+            let isInvValid = true;
+            if (isNaN(V) || V < MIN_INVESTMENT) {
+                invError.style.display = 'none';
+                isInvValid = false;
+            } else {
+                invError.style.display = 'none';
+            }
+
+            const cleanFactorStr = factorInput.replace(',', '.');
+            const factor = parseFloat(cleanFactorStr);
+
+            let isFactorValid = true;
+            if (isNaN(factor) || factor < 0.5 || factor > 2.0) {
+                factorError.style.display = 'none';
+                isFactorValid = false;
+            } else {
+                factorError.style.display = 'none';
+            }
+
+            if (!isInvValid || !isFactorValid) {
+                feePercentageDisplay.innerText = '0,00%';
+                feeAmountDisplay.innerText = '0';
+                return;
+            }
+
+            // Calculation engine
+            const logValue = Math.log10(V / 1000000);
+            const denominator = 2 + logValue;
+            const basePercentage = (-2 + (24 / denominator)) / 100;
+
+            const baseFee = V * basePercentage;
+            const finalFee = baseFee * factor;
+            const finalPercentage = basePercentage * factor;
+
+            feePercentageDisplay.innerText = (finalPercentage * 100).toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '%';
+            
+            // Format fee amount without decimals for cleaner look as in mockup
+            feeAmountDisplay.innerText = Math.round(finalFee).toLocaleString('de-DE');
+        }
+    </script>
+
+    <script>
+        // Register the service worker only when served from a secure origin.
+        // GitHub Pages already uses HTTPS, so no additional server setup is needed.
+        if ('serviceWorker' in navigator &&
+            (location.protocol === 'https:' || location.hostname === 'localhost')) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./service-worker.js')
+                    .catch(error => console.warn('Service worker registration failed:', error));
+            });
+        }
+    </script>
+</body>
+</html>
